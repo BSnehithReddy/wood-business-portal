@@ -59,7 +59,7 @@ export const B2BControlCenter = ({ onOpenAdd, onOpenEdit }) => {
           </div>
           <div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
-              Awaiting Father's Confirmation
+              Awaiting Owner's Confirmation
             </p>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: pendingOrders.length > 0 ? '#ef4444' : 'var(--text-primary)' }}>
               {pendingOrders.length} Orders
@@ -74,7 +74,7 @@ export const B2BControlCenter = ({ onOpenAdd, onOpenEdit }) => {
           </div>
           <div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
-              Father Approved
+              Owner Approved
             </p>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--accent-green)' }}>
               {confirmedOrders.length} Routed
@@ -203,7 +203,7 @@ export const B2BControlCenter = ({ onOpenAdd, onOpenEdit }) => {
                       borderRadius: '99px',
                       textTransform: 'uppercase'
                     }}>
-                      AWAITING FATHER'S DECISION
+                      AWAITING OWNER'S DECISION
                     </span>
                     <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--timber-gold-light)', marginTop: '0.3rem' }}>
                       Order #{order.id} — {order.dealerName}
@@ -313,7 +313,7 @@ export const B2BControlCenter = ({ onOpenAdd, onOpenEdit }) => {
               Master Product Inventory & Price List
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Managing Director (Father) has full authority to add items, modify prices, or delete items.
+              Owner has full authority to add items, modify prices, or delete items.
             </p>
           </div>
 

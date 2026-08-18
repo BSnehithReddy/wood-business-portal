@@ -8,6 +8,7 @@ const MAX_REGISTERED_OWNERS = 3;
 // Default Primary Accounts State (Owner freshly reset to 1/3)
 const INITIAL_ACCOUNTS = {
   OWNER: [
+    { identifier: 'owner', phone: '9849000000', password: 'owner123', name: 'Owner', secretKey: '1234' },
     { identifier: 'father', phone: '9849000000', password: 'owner123', name: 'Owner', secretKey: '1234' }
   ],
   WORKER: [

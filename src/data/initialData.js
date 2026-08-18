@@ -276,7 +276,7 @@ export const INITIAL_ORDERS = [
     vehicleNumber: "AP-28-TA-5544",
     history: [
       { status: "Pending Owner Approval", timestamp: "2026-08-11 16:15", by: "Dealer" },
-      { status: "Confirmed by Owner", timestamp: "2026-08-11 16:45", by: "Owner (Father)" }
+      { status: "Confirmed by Owner", timestamp: "2026-08-11 16:45", by: "Owner" }
     ]
   }
 ];

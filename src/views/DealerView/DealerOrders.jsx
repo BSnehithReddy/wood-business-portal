@@ -50,7 +50,7 @@ export const DealerOrders = () => {
           <Clock size={22} /> Track Your Order Progress ({currentDealer.firmName})
         </h2>
         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          Real-time updates between Your Shop ➔ Owner (Father) ➔ Godown Worker
+          Real-time updates between Your Shop ➔ Owner ➔ Godown Worker
         </span>
       </div>
 
@@ -163,7 +163,7 @@ export const DealerOrders = () => {
                       2
                     </div>
                     <p style={{ fontSize: '0.78rem', fontWeight: step >= 2 ? 800 : 500, color: step >= 2 ? '#34d399' : 'var(--text-muted)' }}>
-                      Father Confirmed
+                      Owner Confirmed
                     </p>
                     <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Routed to Godown</span>
                   </div>
@@ -256,7 +256,7 @@ export const DealerOrders = () => {
                 fontSize: '0.82rem',
                 marginBottom: '1rem'
               }}>
-                <span style={{ fontWeight: 700, color: 'var(--timber-gold)' }}>Note from Owner (Father): </span>
+                <span style={{ fontWeight: 700, color: 'var(--timber-gold)' }}>Note from Owner: </span>
                 <span>{order.ownerNote}</span>
               </div>
             )}

@@ -1,19 +1,17 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { Logo } from './Logo';
-import { Search, ShoppingCart, UserCheck, ShieldCheck, HardHat, LogOut, RefreshCw } from 'lucide-react';
+import { Search, ShoppingCart, UserCheck, ShieldCheck, HardHat, LogOut } from 'lucide-react';
 
 export const Navbar = ({ onOpenCart, onOpenAuth }) => {
   const {
     activeRole,
-    setActiveRole,
     currentUser,
     logout,
     searchQuery,
     setSearchQuery,
     cart,
-    currentDealer,
-    resetDataToDefault
+    currentDealer
   } = useApp();
 
   const cartItemCount = cart.reduce((count, item) => count + item.quantity, 0);
@@ -136,7 +134,7 @@ export const Navbar = ({ onOpenCart, onOpenAuth }) => {
               fontWeight: 700
             }}>
               <ShieldCheck size={16} />
-              Owner (Father) Mode
+              Owner Portal ({currentUser?.name || 'Owner'})
             </div>
           )}
 
@@ -154,55 +152,9 @@ export const Navbar = ({ onOpenCart, onOpenAuth }) => {
               fontWeight: 700
             }}>
               <HardHat size={16} />
-              Godown Worker Mode
+              Godown Worker Terminal ({currentUser?.name || 'Worker'})
             </div>
           )}
-
-          {/* Quick Demo Switch Role Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', borderLeft: '1px solid var(--timber-border)', paddingLeft: '0.75rem' }}>
-            <button
-              onClick={() => setActiveRole('DEALER')}
-              title="Switch to Dealer view"
-              style={{
-                padding: '0.35rem 0.6rem',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                borderRadius: 'var(--radius-sm)',
-                background: activeRole === 'DEALER' ? 'var(--timber-gold)' : 'rgba(255,255,255,0.05)',
-                color: activeRole === 'DEALER' ? '#000' : 'var(--text-muted)'
-              }}
-            >
-              Dealer
-            </button>
-            <button
-              onClick={() => setActiveRole('OWNER')}
-              title="Switch to Owner view"
-              style={{
-                padding: '0.35rem 0.6rem',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                borderRadius: 'var(--radius-sm)',
-                background: activeRole === 'OWNER' ? 'var(--timber-gold)' : 'rgba(255,255,255,0.05)',
-                color: activeRole === 'OWNER' ? '#000' : 'var(--text-muted)'
-              }}
-            >
-              Father
-            </button>
-            <button
-              onClick={() => setActiveRole('WORKER')}
-              title="Switch to Worker view"
-              style={{
-                padding: '0.35rem 0.6rem',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                borderRadius: 'var(--radius-sm)',
-                background: activeRole === 'WORKER' ? '#10b981' : 'rgba(255,255,255,0.05)',
-                color: activeRole === 'WORKER' ? '#000' : 'var(--text-muted)'
-              }}
-            >
-              Worker
-            </button>
-          </div>
 
           {/* Logout Button */}
           <button

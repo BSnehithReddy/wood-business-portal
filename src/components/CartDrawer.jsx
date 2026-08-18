@@ -202,7 +202,7 @@ export const CartDrawer = ({ isOpen, onClose }) => {
               className="btn-primary"
               style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem' }}
             >
-              <span>Submit Requirement to Owner (Father)</span>
+              <span>Submit Requirement to Owner</span>
               <ArrowRight size={18} />
             </button>
           </div>

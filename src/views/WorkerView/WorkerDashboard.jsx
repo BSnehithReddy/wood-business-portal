@@ -16,7 +16,7 @@ import {
 export const WorkerDashboard = ({ onOpenLoadingSlip }) => {
   const { orders, updateLoadingStatus, toggleItemVerified } = useApp();
 
-  // ONLY show orders confirmed by Father / Proprietor
+  // ONLY show orders confirmed by Owner
   const confirmedOrders = orders.filter(
     o => o.status.includes('Confirmed') || o.status === 'Out for Delivery' || o.status === 'Worker Loading'
   );
@@ -70,7 +70,7 @@ export const WorkerDashboard = ({ onOpenLoadingSlip }) => {
               Godown Dispatch Terminal
             </h2>
             <p style={{ fontSize: '0.82rem', color: '#a7f3d0' }}>
-              Showing orders <strong>CONFIRMED BY MANAGING DIRECTOR (FATHER)</strong> ready for physical loading & truck delivery.
+              Showing orders <strong>CONFIRMED BY OWNER</strong> ready for physical loading & truck delivery.
             </p>
           </div>
         </div>
@@ -107,7 +107,7 @@ export const WorkerDashboard = ({ onOpenLoadingSlip }) => {
             No Orders Ready for Loading Right Now
           </h3>
           <p style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>
-            When your father clicks <strong>[CONFIRM ORDER]</strong> in the Managing Director Portal, orders will appear here automatically for you to load and deliver.
+            When the Owner clicks <strong>[CONFIRM ORDER]</strong> in the Owner Portal, orders will appear here automatically for you to load and deliver.
           </p>
         </div>
       ) : (
@@ -141,7 +141,7 @@ export const WorkerDashboard = ({ onOpenLoadingSlip }) => {
                 }}>
                   <div>
                     <span className="badge badge-status-confirmed" style={{ marginBottom: '0.35rem' }}>
-                      <ShieldCheck size={14} /> CONFIRMED BY FATHER
+                      <ShieldCheck size={14} /> CONFIRMED BY OWNER
                     </span>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
                       Order #{order.id} — {order.dealerName}
@@ -251,7 +251,7 @@ export const WorkerDashboard = ({ onOpenLoadingSlip }) => {
                   {currentLoading === 'Pending Loading' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                        Status: <strong>Order Confirmed by Father ➔ Ready in Godown</strong>
+                        Status: <strong>Order Confirmed by Owner ➔ Ready in Godown</strong>
                       </span>
                       <button
                         onClick={() => handleStartLoading(order.id)}
