@@ -19,7 +19,7 @@ import { B2BControlCenter } from './views/OwnerView/B2BControlCenter';
 import { WorkerDashboard } from './views/WorkerView/WorkerDashboard';
 
 function MainApp() {
-  const { isAuthenticated, activeRole, confettiActive } = useApp();
+  const { isAuthenticated, currentUser, activeRole, confettiActive } = useApp();
 
   // Modals state
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -29,7 +29,7 @@ function MainApp() {
   const [selectedOrderForSlip, setSelectedOrderForSlip] = useState(null);
 
   // If user is not logged in, render the login gateway!
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !currentUser) {
     return (
       <>
         <LoginScreen />
@@ -38,6 +38,9 @@ function MainApp() {
       </>
     );
   }
+
+  // STRICT ROLE ENFORCEMENT: Force view strictly to logged-in account role
+  const userRole = currentUser.role || activeRole;
 
   const handleOpenEdit = (product) => {
     setSelectedProductToEdit(product);
@@ -74,8 +77,8 @@ function MainApp() {
         width: '100%',
         flex: 1
       }}>
-        {/* DEALER STOREFRONT VIEW */}
-        {activeRole === 'DEALER' && (
+        {/* DEALER STOREFRONT VIEW - Strictly for Logged In Dealer */}
+        {userRole === 'DEALER' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <CategoryNav />
 
@@ -97,16 +100,16 @@ function MainApp() {
           </div>
         )}
 
-        {/* OWNER B2B CONTROL CENTER */}
-        {activeRole === 'OWNER' && (
+        {/* OWNER B2B CONTROL CENTER - Strictly for Logged In Owner */}
+        {userRole === 'OWNER' && (
           <B2BControlCenter
             onOpenAdd={() => setIsAddProductOpen(true)}
             onOpenEdit={handleOpenEdit}
           />
         )}
 
-        {/* GODOWN WORKER DISPATCH TERMINAL */}
-        {activeRole === 'WORKER' && (
+        {/* GODOWN WORKER DISPATCH TERMINAL - Strictly for Logged In Worker */}
+        {userRole === 'WORKER' && (
           <WorkerDashboard
             onOpenLoadingSlip={handleOpenSlip}
           />

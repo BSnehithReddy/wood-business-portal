@@ -117,7 +117,7 @@ export const LoginScreen = () => {
     setActiveRole(role);
     setIsRegisterMode(false);
     if (role === 'OWNER') {
-      setIdentifier('father');
+      setIdentifier('owner');
       setPassword('owner123');
     } else if (role === 'WORKER') {
       setIdentifier('worker');

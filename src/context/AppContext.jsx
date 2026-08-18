@@ -8,8 +8,7 @@ const MAX_REGISTERED_OWNERS = 3;
 // Default Primary Accounts State (Owner freshly reset to 1/3)
 const INITIAL_ACCOUNTS = {
   OWNER: [
-    { identifier: 'owner', phone: '9849000000', password: 'owner123', name: 'Owner', secretKey: '1234' },
-    { identifier: 'father', phone: '9849000000', password: 'owner123', name: 'Owner', secretKey: '1234' }
+    { identifier: 'owner', phone: '9849000000', password: 'owner123', name: 'Owner', secretKey: '1234' }
   ],
   WORKER: [
     { identifier: 'worker', phone: '9000000000', password: 'worker123', name: 'Godown Warehouse Supervisor', bayNo: 'Bay 4' }
@@ -27,7 +26,7 @@ export const AppProvider = ({ children }) => {
   // Active Role: 'DEALER' | 'OWNER' | 'WORKER'
   const [activeRole, setActiveRole] = useState('DEALER');
 
-  // Registered Owners (Freshly reset to 1/3 primary owner: father / 9849000000)
+  // Registered Owners (Freshly reset to 1/3 primary owner: owner / 9849000000)
   const [registeredOwners, setRegisteredOwners] = useState(() => {
     return INITIAL_ACCOUNTS.OWNER;
   });
