@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { INITIAL_PRODUCTS, INITIAL_ORDERS, INITIAL_DEALERS } from '../data/initialData';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const AppContext = createContext();
 
@@ -26,17 +27,20 @@ export const AppProvider = ({ children }) => {
   // Active Role: 'DEALER' | 'OWNER' | 'WORKER'
   const [activeRole, setActiveRole] = useState('DEALER');
 
-  // Registered Owners (Freshly reset to 1/3 primary owner: owner / 9849000000)
+  // Registered Accounts State
   const [registeredOwners, setRegisteredOwners] = useState(() => {
-    return INITIAL_ACCOUNTS.OWNER;
+    const saved = localStorage.getItem('mm_registered_owners');
+    return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS.OWNER;
   });
 
   const [registeredDealers, setRegisteredDealers] = useState(() => {
-    return INITIAL_ACCOUNTS.DEALER;
+    const saved = localStorage.getItem('mm_registered_dealers');
+    return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS.DEALER;
   });
 
   const [registeredWorkers, setRegisteredWorkers] = useState(() => {
-    return INITIAL_ACCOUNTS.WORKER;
+    const saved = localStorage.getItem('mm_registered_workers');
+    return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS.WORKER;
   });
 
   // Current Active Dealer Details
@@ -60,7 +64,7 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_ORDERS;
   });
 
-  // USER-ISOLATED SHOPPING CART STATE (Private per user account)
+  // Shopping Cart State
   const [cart, setCart] = useState([]);
 
   // Filtering & Search
@@ -78,29 +82,81 @@ export const AppProvider = ({ children }) => {
     setTimeout(() => setConfettiActive(false), 3500);
   };
 
-  // Force Log Out on Startup / Reset Session & Clear Owner Storage
+  // SYNC WITH SUPABASE IF CONFIGURED
   useEffect(() => {
-    localStorage.removeItem('mm_is_authenticated');
-    localStorage.removeItem('mm_current_user');
-    localStorage.removeItem('mm_registered_owners');
+    if (!isSupabaseConfigured) return;
+
+    const fetchSupabaseData = async () => {
+      try {
+        const { data: dbDealers } = await supabase.from('dealers').select('*');
+        if (dbDealers && dbDealers.length > 0) {
+          setRegisteredDealers(dbDealers.map(d => ({
+            identifier: d.phone,
+            phone: d.phone,
+            password: d.password,
+            firmName: d.firm_name,
+            address: d.address
+          })));
+        }
+
+        const { data: dbOwners } = await supabase.from('owners').select('*');
+        if (dbOwners && dbOwners.length > 0) {
+          setRegisteredOwners(dbOwners.map(o => ({
+            identifier: o.phone,
+            phone: o.phone,
+            password: o.password,
+            name: o.name
+          })));
+        }
+
+        const { data: dbWorkers } = await supabase.from('workers').select('*');
+        if (dbWorkers && dbWorkers.length > 0) {
+          setRegisteredWorkers(dbWorkers.map(w => ({
+            identifier: w.phone,
+            phone: w.phone,
+            password: w.password,
+            name: w.name,
+            bayNo: w.bay_no
+          })));
+        }
+
+        const { data: dbProducts } = await supabase.from('products').select('*');
+        if (dbProducts && dbProducts.length > 0) {
+          setProducts(dbProducts.map(p => ({
+            id: p.id,
+            title: p.title,
+            category: p.category,
+            spec: p.spec,
+            price: Number(p.price),
+            priceUnit: p.price_unit,
+            isInStock: p.is_in_stock,
+            minOrder: p.min_order,
+            imageUrl: p.image_url
+          })));
+        }
+
+        const { data: dbOrders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if (dbOrders && dbOrders.length > 0) {
+          setOrders(dbOrders.map(o => ({
+            id: o.id,
+            dealerFirm: o.dealer_firm,
+            contact: o.contact,
+            items: o.items,
+            status: o.status,
+            note: o.note,
+            grandTotal: Number(o.grand_total),
+            createdAt: o.created_at
+          })));
+        }
+      } catch (err) {
+        console.warn('Supabase fetch notice:', err);
+      }
+    };
+
+    fetchSupabaseData();
   }, []);
 
-  // LOAD & SAVE ISOLATED USER CART PER USER PHONE / ID
-  useEffect(() => {
-    if (currentUser && currentUser.phone) {
-      const savedCart = localStorage.getItem(`mm_cart_${currentUser.phone}`);
-      setCart(savedCart ? JSON.parse(savedCart) : []);
-    } else {
-      setCart([]);
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (currentUser && currentUser.phone) {
-      localStorage.setItem(`mm_cart_${currentUser.phone}`, JSON.stringify(cart));
-    }
-  }, [cart, currentUser]);
-
+  // Sync to local storage as fallback
   useEffect(() => {
     localStorage.setItem('mm_registered_owners', JSON.stringify(registeredOwners));
   }, [registeredOwners]);
@@ -121,6 +177,22 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('mm_orders_list', JSON.stringify(orders));
   }, [orders]);
 
+  // LOAD & SAVE ISOLATED USER CART
+  useEffect(() => {
+    if (currentUser && currentUser.phone) {
+      const savedCart = localStorage.getItem(`mm_cart_${currentUser.phone}`);
+      setCart(savedCart ? JSON.parse(savedCart) : []);
+    } else {
+      setCart([]);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser && currentUser.phone) {
+      localStorage.setItem(`mm_cart_${currentUser.phone}`, JSON.stringify(cart));
+    }
+  }, [cart, currentUser]);
+
   const showToast = (message, type = 'info') => {
     setToast({ message, type, id: Date.now() });
     setTimeout(() => {
@@ -128,7 +200,7 @@ export const AppProvider = ({ children }) => {
     }, 4000);
   };
 
-  // STRICT LOGIN AUTHENTICATION FOR ALL 3 ROLES
+  // LOGIN AUTHENTICATION
   const login = (role, identifier, password) => {
     const cleanId = (identifier || '').trim().toLowerCase();
     const cleanPass = (password || '').trim();
@@ -175,7 +247,6 @@ export const AppProvider = ({ children }) => {
     setCurrentUser(userObj);
     setIsAuthenticated(true);
 
-    // Load isolated cart for logged in user
     const userCart = localStorage.getItem(`mm_cart_${userObj.phone}`);
     setCart(userCart ? JSON.parse(userCart) : []);
 
@@ -191,17 +262,15 @@ export const AppProvider = ({ children }) => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCart([]);
-    localStorage.removeItem('mm_is_authenticated');
-    localStorage.removeItem('mm_current_user');
     showToast('Logged out of MM Wood Boards & Laminates Portal', 'info');
   };
 
-  // REGISTER OWNER (STRICTLY CAPPED AT 3 PHONE NUMBERS MAX)
-  const registerOwner = (ownerData) => {
+  // REGISTER OWNER
+  const registerOwner = async (ownerData) => {
     const cleanPhone = (ownerData.phone || '').trim();
 
     if (registeredOwners.length >= MAX_REGISTERED_OWNERS) {
-      showToast(`Registration Locked! Maximum limit of 3 owner accounts reached. No more signups permitted.`, 'error');
+      showToast(`Registration Locked! Maximum limit of 3 owner accounts reached.`, 'error');
       return false;
     }
 
@@ -219,14 +288,23 @@ export const AppProvider = ({ children }) => {
     };
 
     setRegisteredOwners(prev => [...prev, newOwner]);
+
+    if (isSupabaseConfigured) {
+      await supabase.from('owners').insert([{
+        phone: cleanPhone,
+        name: ownerData.name || 'Owner',
+        password: ownerData.password
+      }]);
+    }
+
     login('OWNER', cleanPhone, ownerData.password);
     triggerConfetti();
-    showToast(`Owner Account for "${newOwner.name}" Created & Authenticated! (${registeredOwners.length + 1}/${MAX_REGISTERED_OWNERS} slots used)`, 'success');
+    showToast(`Owner Account for "${newOwner.name}" Created & Authenticated!`, 'success');
     return true;
   };
 
   // REGISTER DEALER
-  const registerDealer = (dealerData) => {
+  const registerDealer = async (dealerData) => {
     const cleanPhone = (dealerData.phone || '').trim();
 
     if (registeredDealers.some(d => (d.phone || '').includes(cleanPhone))) {
@@ -253,14 +331,23 @@ export const AppProvider = ({ children }) => {
       address: dealerData.address || 'Industrial Area, Hyderabad'
     });
 
+    if (isSupabaseConfigured) {
+      await supabase.from('dealers').insert([{
+        phone: cleanPhone,
+        firm_name: dealerData.firmName,
+        password: dealerData.password,
+        address: dealerData.address || 'Industrial Area, Hyderabad'
+      }]);
+    }
+
     login('DEALER', cleanPhone, dealerData.password);
     triggerConfetti();
-    showToast(`Dealer Firm "${dealerData.firmName}" Registered & Authenticated!`, 'success');
+    showToast(`Dealer Shop "${newDealer.firmName}" Registered & Authenticated!`, 'success');
     return true;
   };
 
   // REGISTER WORKER
-  const registerWorker = (workerData) => {
+  const registerWorker = async (workerData) => {
     const cleanPhone = (workerData.phone || '').trim();
 
     if (registeredWorkers.some(w => (w.phone || '').includes(cleanPhone))) {
@@ -269,21 +356,218 @@ export const AppProvider = ({ children }) => {
     }
 
     const newWorker = {
-      identifier: cleanPhone || workerData.name,
+      identifier: cleanPhone,
       phone: cleanPhone,
       password: workerData.password,
-      name: workerData.name || 'Godown Worker',
-      bayNo: workerData.bayNo || 'Bay 1'
+      name: workerData.name || 'Worker',
+      bayNo: workerData.bayNo || 'Bay 4'
     };
 
     setRegisteredWorkers(prev => [...prev, newWorker]);
+
+    if (isSupabaseConfigured) {
+      await supabase.from('workers').insert([{
+        phone: cleanPhone,
+        name: workerData.name || 'Worker',
+        password: workerData.password,
+        bay_no: workerData.bayNo || 'Bay 4'
+      }]);
+    }
+
     login('WORKER', cleanPhone, workerData.password);
     triggerConfetti();
-    showToast(`Worker Account for "${newWorker.name}" Created & Authenticated!`, 'success');
+    showToast(`Godown Worker Account "${newWorker.name}" Registered & Logged In!`, 'success');
     return true;
   };
 
-  // FORCE LOGOUT ALL & RESET REGISTRATIONS RESTART
+  // CART OPERATIONS
+  const addToCart = (product, quantity = 1) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity }];
+    });
+    showToast(`Added ${quantity} × ${product.title} to order list`, 'success');
+  };
+
+  const updateCartQuantity = (productId, quantity) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    setCart(prev =>
+      prev.map(item => (item.id === productId ? { ...item, quantity } : item))
+    );
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(prev => prev.filter(item => item.id !== productId));
+    showToast('Removed item from order list', 'info');
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  // PLACE ORDER
+  const placeOrder = async () => {
+    if (cart.length === 0) {
+      showToast('Order list is empty! Add plywood or laminates first.', 'error');
+      return false;
+    }
+
+    const grandTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const newOrder = {
+      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+      dealerFirm: currentDealer.firmName,
+      contact: `+91 ${currentDealer.phone} • GSTIN: ${currentDealer.gstin}`,
+      items: [...cart],
+      status: 'Pending Owner Approval',
+      note: 'Placed via B2B Dealer Portal',
+      grandTotal,
+      createdAt: new Date().toISOString()
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+
+    if (isSupabaseConfigured) {
+      await supabase.from('orders').insert([{
+        id: newOrder.id,
+        dealer_firm: newOrder.dealerFirm,
+        contact: newOrder.contact,
+        items: newOrder.items,
+        status: newOrder.status,
+        note: newOrder.note,
+        grand_total: newOrder.grandTotal
+      }]);
+    }
+
+    clearCart();
+    triggerConfetti();
+    showToast(`Order #${newOrder.id} Placed Successfully! Sent to Owner for Approval.`, 'success');
+    return true;
+  };
+
+  // CONFIRM ORDER
+  const confirmOrder = async (orderId, note = '') => {
+    const updatedStatus = 'Owner Confirmed - Sent to Worker Bay 4';
+    setOrders(prev =>
+      prev.map(o =>
+        o.id === orderId
+          ? { ...o, status: updatedStatus, note: note || o.note }
+          : o
+      )
+    );
+
+    if (isSupabaseConfigured) {
+      await supabase.from('orders').update({ status: updatedStatus, note }).eq('id', orderId);
+    }
+
+    showToast(`Order #${orderId} Approved & Dispatched to Godown Worker!`, 'success');
+  };
+
+  // REJECT ORDER
+  const rejectOrder = async (orderId, reason = '') => {
+    const updatedStatus = 'Rejected by Owner';
+    const note = `Rejected: ${reason || 'Out of stock in godown'}`;
+    setOrders(prev =>
+      prev.map(o =>
+        o.id === orderId
+          ? { ...o, status: updatedStatus, note }
+          : o
+      )
+    );
+
+    if (isSupabaseConfigured) {
+      await supabase.from('orders').update({ status: updatedStatus, note }).eq('id', orderId);
+    }
+
+    showToast(`Order #${orderId} marked as Rejected.`, 'info');
+  };
+
+  // DISPATCH LOADING SLIP
+  const dispatchOrder = async (orderId) => {
+    const updatedStatus = 'Worker Loaded & Ready for Dispatch';
+    setOrders(prev =>
+      prev.map(o =>
+        o.id === orderId
+          ? { ...o, status: updatedStatus }
+          : o
+      )
+    );
+
+    if (isSupabaseConfigured) {
+      await supabase.from('orders').update({ status: updatedStatus }).eq('id', orderId);
+    }
+
+    triggerConfetti();
+    showToast(`Loading Slip Generated! Order #${orderId} Loaded & Ready for Dispatch.`, 'success');
+  };
+
+  // ADD NEW PRODUCT TO CATALOG
+  const addProduct = async (newProdData) => {
+    const id = `PROD-${Date.now()}`;
+    const product = {
+      id,
+      title: newProdData.title,
+      category: newProdData.category || 'Plywood',
+      spec: newProdData.spec || 'Standard',
+      price: Number(newProdData.price) || 1000,
+      priceUnit: newProdData.priceUnit || 'sheet',
+      isInStock: true,
+      minOrder: Number(newProdData.minOrder) || 1,
+      imageUrl: newProdData.imageUrl || 'https://images.unsplash.com/photo-1546484475-7f7bd55792da?auto=format&fit=crop&w=600&q=80'
+    };
+
+    setProducts(prev => [product, ...prev]);
+
+    if (isSupabaseConfigured) {
+      await supabase.from('products').insert([{
+        id: product.id,
+        title: product.title,
+        category: product.category,
+        spec: product.spec,
+        price: product.price,
+        price_unit: product.priceUnit,
+        is_in_stock: product.isInStock,
+        min_order: product.minOrder,
+        image_url: product.imageUrl
+      }]);
+    }
+
+    showToast(`Added "${product.title}" to Master Catalog!`, 'success');
+  };
+
+  // UPDATE PRODUCT
+  const updateProduct = async (updatedProd) => {
+    setProducts(prev =>
+      prev.map(p => (p.id === updatedProd.id ? { ...p, ...updatedProd } : p))
+    );
+
+    if (isSupabaseConfigured) {
+      await supabase.from('products').update({
+        title: updatedProd.title,
+        category: updatedProd.category,
+        spec: updatedProd.spec,
+        price: updatedProd.price,
+        price_unit: updatedProd.priceUnit,
+        is_in_stock: updatedProd.isInStock,
+        min_order: updatedProd.minOrder,
+        image_url: updatedProd.imageUrl
+      }).eq('id', updatedProd.id);
+    }
+
+    showToast(`Updated details for "${updatedProd.title}"`, 'success');
+  };
+
+  // RESET ALL REGISTRATIONS
   const resetAllRegistrations = () => {
     setRegisteredOwners(INITIAL_ACCOUNTS.OWNER);
     setRegisteredDealers(INITIAL_ACCOUNTS.DEALER);
@@ -291,208 +575,9 @@ export const AppProvider = ({ children }) => {
     setProducts(INITIAL_PRODUCTS);
     setOrders(INITIAL_ORDERS);
     setCart([]);
-    localStorage.removeItem('mm_registered_owners');
-    localStorage.removeItem('mm_registered_dealers');
-    localStorage.removeItem('mm_registered_workers');
-    localStorage.removeItem('mm_products_catalog');
-    localStorage.removeItem('mm_orders_list');
-    localStorage.removeItem('mm_is_authenticated');
-    localStorage.removeItem('mm_current_user');
     setIsAuthenticated(false);
     setCurrentUser(null);
-    showToast('All owner accounts logged out & slots freshly set to 1 / 3!', 'info');
-  };
-
-  // Cart Handlers (Isolated to active user)
-  const addToCart = (product, quantity = 1) => {
-    setCart(prev => {
-      const existingIndex = prev.findIndex(item => item.id === product.id);
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        updated[existingIndex].quantity += quantity;
-        return updated;
-      } else {
-        return [...prev, { ...product, quantity }];
-      }
-    });
-    showToast(`Added ${quantity} ${product.unit}(s) of ${product.name} to cart`, 'success');
-  };
-
-  const updateCartQuantity = (productId, newQty) => {
-    if (newQty <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    setCart(prev => prev.map(item => item.id === productId ? { ...item, quantity: newQty } : item));
-  };
-
-  const removeFromCart = (productId) => {
-    setCart(prev => prev.filter(item => item.id !== productId));
-    showToast('Item removed from cart', 'warning');
-  };
-
-  const clearCart = () => {
-    setCart([]);
-    if (currentUser && currentUser.phone) {
-      localStorage.removeItem(`mm_cart_${currentUser.phone}`);
-    }
-  };
-
-  // Order Placement
-  const placeOrder = (deliveryNotes = '') => {
-    if (cart.length === 0) return;
-
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const taxGst = Math.round(subtotal * 0.18);
-    const grandTotal = subtotal + taxGst;
-
-    const newOrder = {
-      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      dealerName: currentDealer.firmName,
-      dealerContact: currentDealer.phone,
-      dealerGst: currentDealer.gstin,
-      deliveryAddress: currentDealer.address,
-      orderDate: new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }),
-      items: cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        unit: item.unit,
-        total: item.price * item.quantity,
-        verified: false
-      })),
-      subtotal,
-      taxGst,
-      grandTotal,
-      status: 'Pending Owner Approval',
-      notes: deliveryNotes,
-      history: [
-        { status: 'Pending Owner Approval', timestamp: new Date().toLocaleTimeString(), by: 'Dealer' }
-      ]
-    };
-
-    setOrders(prev => [newOrder, ...prev]);
-    clearCart();
-    triggerConfetti();
-    showToast(`🎉 Order #${newOrder.id} submitted to Owner for approval!`, 'success');
-  };
-
-  // Owner Actions
-  const confirmOrder = (orderId, ownerNote = '') => {
-    setOrders(prev => prev.map(order => {
-      if (order.id === orderId) {
-        return {
-          ...order,
-          status: 'Confirmed by Owner',
-          loadingStatus: 'Pending Loading',
-          ownerNote: ownerNote || 'Order confirmed by Owner. Forwarded to Godown for loading.',
-          history: [
-            ...order.history,
-            { status: 'Confirmed by Owner', timestamp: new Date().toLocaleTimeString(), by: 'Owner' }
-          ]
-        };
-      }
-      return order;
-    }));
-    triggerConfetti();
-    showToast(`🎉 Order #${orderId} CONFIRMED BY OWNER! Sent to Godown Worker interface immediately.`, 'success');
-  };
-
-  const rejectOrder = (orderId, reason = 'Out of Stock') => {
-    setOrders(prev => prev.map(order => {
-      if (order.id === orderId) {
-        return {
-          ...order,
-          status: 'Rejected by Owner',
-          ownerNote: reason,
-          history: [
-            ...order.history,
-            { status: 'Rejected', timestamp: new Date().toLocaleTimeString(), by: 'Owner' }
-          ]
-        };
-      }
-      return order;
-    }));
-    showToast(`Order #${orderId} marked as Rejected/No Stock.`, 'error');
-  };
-
-  // Worker Loading Item Verification Checklist
-  const toggleItemVerified = (orderId, itemIndex) => {
-    setOrders(prev => prev.map(order => {
-      if (order.id === orderId) {
-        const updatedItems = [...order.items];
-        updatedItems[itemIndex] = {
-          ...updatedItems[itemIndex],
-          verified: !updatedItems[itemIndex].verified
-        };
-        return { ...order, items: updatedItems };
-      }
-      return order;
-    }));
-  };
-
-  // Worker Dispatch Actions
-  const updateLoadingStatus = (orderId, newLoadingStatus, vehicleNumber = '', driverPhone = '') => {
-    setOrders(prev => prev.map(order => {
-      if (order.id === orderId) {
-        let orderOverallStatus = order.status;
-        if (newLoadingStatus === 'Out for Delivery') {
-          orderOverallStatus = 'Out for Delivery';
-        } else if (newLoadingStatus === 'Loading In Progress') {
-          orderOverallStatus = 'Worker Loading';
-        }
-
-        return {
-          ...order,
-          status: orderOverallStatus,
-          loadingStatus: newLoadingStatus,
-          vehicleNumber: vehicleNumber || order.vehicleNumber || 'AP-28-TA-5544',
-          driverPhone: driverPhone || order.driverPhone || '+91 98490 99887',
-          history: [
-            ...order.history,
-            { status: newLoadingStatus, timestamp: new Date().toLocaleTimeString(), by: 'Godown Worker' }
-          ]
-        };
-      }
-      return order;
-    }));
-    if (newLoadingStatus === 'Out for Delivery') {
-      triggerConfetti();
-    }
-    showToast(`Order #${orderId} status updated to: ${newLoadingStatus}`, 'info');
-  };
-
-  // Catalog CRUD
-  const addProduct = (newProduct) => {
-    const id = `PROD-${Math.floor(100 + Math.random() * 900)}`;
-    const productWithId = {
-      ...newProduct,
-      id,
-      rating: 5.0,
-      inStock: newProduct.stock > 0
-    };
-    setProducts(prev => [productWithId, ...prev]);
-    showToast(`New product "${newProduct.name}" added to catalog!`, 'success');
-  };
-
-  const editProduct = (productId, updatedFields) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === productId) {
-        return {
-          ...p,
-          ...updatedFields,
-          inStock: updatedFields.stock > 0
-        };
-      }
-      return p;
-    }));
-    showToast(`Product specifications updated!`, 'success');
-  };
-
-  const deleteProduct = (productId) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
-    showToast(`Product removed from catalog`, 'warning');
+    showToast('System Reset Complete! Restored primary owner (1/3 slots used)', 'info');
   };
 
   return (
@@ -500,35 +585,16 @@ export const AppProvider = ({ children }) => {
       value={{
         isAuthenticated,
         currentUser,
-        login,
-        logout,
-        registerDealer,
-        registerOwner,
-        registerWorker,
-        resetAllRegistrations,
+        activeRole,
+        setActiveRole,
         registeredOwners,
         registeredDealers,
         registeredWorkers,
         maxRegisteredOwners: MAX_REGISTERED_OWNERS,
-        activeRole,
-        setActiveRole,
         currentDealer,
-        setCurrentDealer,
         products,
         orders,
         cart,
-        addToCart,
-        updateCartQuantity,
-        removeFromCart,
-        clearCart,
-        placeOrder,
-        confirmOrder,
-        rejectOrder,
-        toggleItemVerified,
-        updateLoadingStatus,
-        addProduct,
-        editProduct,
-        deleteProduct,
         selectedCategory,
         setSelectedCategory,
         filterMM,
@@ -538,8 +604,23 @@ export const AppProvider = ({ children }) => {
         searchQuery,
         setSearchQuery,
         toast,
-        showToast,
-        confettiActive
+        confettiActive,
+        login,
+        logout,
+        registerOwner,
+        registerDealer,
+        registerWorker,
+        addToCart,
+        updateCartQuantity,
+        removeFromCart,
+        clearCart,
+        placeOrder,
+        confirmOrder,
+        rejectOrder,
+        dispatchOrder,
+        addProduct,
+        updateProduct,
+        resetAllRegistrations
       }}
     >
       {children}
