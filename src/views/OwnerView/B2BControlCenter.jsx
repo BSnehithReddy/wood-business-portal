@@ -9,7 +9,8 @@ import {
   Package,
   TrendingUp,
   Clock,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 
 export const B2BControlCenter = ({ onOpenAdd, onOpenEdit }) => {
@@ -17,7 +18,8 @@ export const B2BControlCenter = ({ onOpenAdd, onOpenEdit }) => {
     products,
     orders,
     confirmOrder,
-    rejectOrder
+    rejectOrder,
+    resetAllRegistrations
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'catalog'
@@ -148,12 +150,37 @@ export const B2BControlCenter = ({ onOpenAdd, onOpenEdit }) => {
           </button>
         </div>
 
-        {activeTab === 'catalog' && (
-          <button onClick={onOpenAdd} className="btn-primary">
-            <PlusCircle size={18} />
-            + Add New Item to Catalog
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {activeTab === 'catalog' && (
+            <button onClick={onOpenAdd} className="btn-primary">
+              <PlusCircle size={18} />
+              + Add New Item to Catalog
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              if (window.confirm("Are you sure you want to reset all registrations and restart the system?")) {
+                resetAllRegistrations();
+              }
+            }}
+            style={{
+              padding: '0.6rem 1rem',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.8rem',
+              fontWeight: 800,
+              background: 'rgba(239, 68, 68, 0.12)',
+              color: '#f87171',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              cursor: 'pointer'
+            }}
+          >
+            <RefreshCw size={14} /> Reset System & Restart
           </button>
-        )}
+        </div>
       </div>
 
       {/* TAB 1: PENDING CONFIRMATIONS */}

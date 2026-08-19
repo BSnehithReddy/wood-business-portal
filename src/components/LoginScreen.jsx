@@ -321,7 +321,7 @@ export const LoginScreen = () => {
                 <input
                   type="text"
                   required
-                  placeholder={activeRole === 'OWNER' ? 'father or 9849000000' : activeRole === 'WORKER' ? 'worker or 9000000000' : '9849012345'}
+                  placeholder={activeRole === 'OWNER' ? 'owner or 9849000000' : activeRole === 'WORKER' ? 'worker or 9000000000' : '9849012345'}
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
                   style={{ width: '100%', paddingLeft: '2.5rem' }}
@@ -564,99 +564,6 @@ export const LoginScreen = () => {
           </form>
         )}
 
-        {/* DEMO CREDENTIALS HINT CARDS */}
-        <div style={{
-          borderTop: '1px dashed var(--timber-border)',
-          marginTop: '1.5rem',
-          paddingTop: '1.1rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
-              ⚡ 1-Click Demo Login Shortcuts:
-            </p>
-            <button
-              type="button"
-              onClick={resetAllRegistrations}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--accent-red)',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem'
-              }}
-            >
-              <RefreshCw size={12} /> Reset System & Restart
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-            <button
-              type="button"
-              onClick={() => fillCredentials('OWNER')}
-              style={{
-                background: 'rgba(245, 158, 11, 0.12)',
-                color: 'var(--timber-gold-light)',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-                padding: '0.45rem 0.85rem',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <span>👑 Owner: <strong>father</strong></span>
-              <span style={{ fontSize: '0.72rem', background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>Pass: owner123</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fillCredentials('WORKER')}
-              style={{
-                background: 'rgba(16, 185, 129, 0.12)',
-                color: '#34d399',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                padding: '0.45rem 0.85rem',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <span>👷 Godown Worker: <strong>worker</strong></span>
-              <span style={{ fontSize: '0.72rem', background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>Pass: worker123</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fillCredentials('DEALER')}
-              style={{
-                background: 'rgba(255, 255, 255, 0.06)',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--timber-border)',
-                padding: '0.45rem 0.85rem',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <span>🏪 Dealer Shop: <strong>9849012345</strong></span>
-              <span style={{ fontSize: '0.72rem', background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>Pass: dealer123</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
